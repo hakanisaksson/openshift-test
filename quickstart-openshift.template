@@ -1,0 +1,847 @@
+{
+  "AWSTemplateFormatVersion" : "2010-09-09",
+  "Description" : "QS(0022) RedHat OpenShift CloudFormation Template revised on 12-Sep-2016 ",
+  "Metadata" : {
+  "AWS::CloudFormation::Interface" : {
+    "ParameterGroups" : [
+        { "Label" : { "default" : "Redhat Customer Portal Authentication" }, "Parameters" : ["RedhatPortalUsername", "RedhatPortalPassword" ] },
+        { "Label" : { "default" : "Instances Configuration" }, "Parameters" : ["KeyPairName", "Credentials", "BastionPassword", "MasterInstanceType", "Node1InstanceType", "Node2InstanceType", "BastionInstanceType", "AllowConnectionFrom" ] },
+        { "Label" : { "default" : "Network Configuration" }, "Parameters" : [ "VPCCIDR", "PublicSubnetCIDR", "PrivateSubnetCIDR" ] }
+     ],
+    "ParameterLabels" : { "Credentials" : { "default" : "Set the root password for Instances" } }
+     }
+  },
+  "Parameters" : {
+  "VPCCIDR" : {
+    "Description" : "Give the VPC CIDR range to create VPC",
+    "Type" : "String",
+    "Default" : "10.90.0.0/16"
+  },
+  "PublicSubnetCIDR" : {
+    "Description" : "Give the CIDR range to create Public Subnet",
+    "Type" : "String",
+    "Default" : "10.90.1.0/24"
+  },
+  "PrivateSubnetCIDR" : {
+    "Description" : "Give the CIDR range to create Private Subnet",
+    "Type" : "String",
+    "Default" : "10.90.2.0/24"
+  },
+  "AllowConnectionFrom": {
+             "Description" : "PLEASE CHANGE THIS VALUE TO YOUR SYSTEM IP ADDRESS [Ex: 184.191.212.25/32]",
+             "Type": "String",
+             "MinLength": "9",
+             "MaxLength": "18",
+             "AllowedPattern": "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})",
+             "ConstraintDescription": "Must be a valid IP CIDR range of the form x.x.x.x/x",
+             "Default":"0.0.0.0/0"
+    },
+    "MasterInstanceType" : {
+      "Default" : "t2.large",
+      "Description" : "Type of EC2 instance for the Master instance",
+      "Type" : "String"
+    },
+    "Node1InstanceType" : {
+      "Default" : "t2.large",
+      "Description" : "Type of EC2 instance for the Node1 instances",
+      "Type" : "String"
+    },
+    "Node2InstanceType" : {
+      "Default" : "t2.large",
+      "Description" : "Type of EC2 instance for the Node2 instances",
+      "Type" : "String"
+    },
+    "BastionInstanceType" : {
+      "Default" : "t2.large",
+      "Description" : "Type of EC2 instance for the Fedora instances",
+      "Type" : "String"
+    },
+    "Credentials" : {
+      "NoEcho" : "true",
+      "Description" : "Set password for root account ",
+      "Type" : "String",
+      "MinLength": "0",
+      "MaxLength": "255",
+      "Default" : ""
+    },
+    "BastionPassword" : {
+        "Description" : "Set password for bastion host",
+        "Type" : "String",
+        "NoEcho": "true"
+    },
+    "RedhatPortalUsername" : {
+      "NoEcho" : "true",
+      "Description" : "Provide Redhat Customer Portal Username",
+      "Type" : "String",
+      "MinLength": "0",
+      "MaxLength": "255",
+      "Default" : ""
+    },
+    "RedhatPortalPassword" : {
+      "NoEcho" : "true",
+      "Description" : "Provide Redhat Customer Portal Password",
+      "Type" : "String",
+      "MinLength": "0",
+      "MaxLength": "255",
+      "Default" : ""
+    },
+    "KeyPairName" : {
+      "Default" : "",
+      "Type" : "AWS::EC2::KeyPair::KeyName",
+      "Description" : "SSH Key pair to associate with EC2 resources"
+    }
+  },
+   "Mappings" : {
+    "AWSRegion2RHELAMI" : {
+      "ap-northeast-1":   { "64": "ami-0dd8f963" },
+      "ap-southeast-2":   { "64": "ami-e0c19f83" },
+      "eu-west-1":        { "64": "ami-8b8c57f8" },
+      "ap-southeast-1":   { "64": "ami-3f03c55c" },
+      "us-east-1":        { "64": "ami-2051294a" },
+      "us-west-2":        { "64": "ami-775e4f16" },
+      "us-west-1":        { "64": "ami-d1315fb1" },
+      "eu-central-1":     { "64": "ami-875042eb" },
+      "sa-east-1":        { "64": "ami-27b3094b" }
+   },
+   "AWSRegion2FedoraAMI" : {
+     "us-east-1":        { "64": "ami-7b8afa11" },
+     "ap-northeast-1":   { "64": "ami-b4193cda" },
+     "eu-west-1":        { "64": "ami-080bd47b" },
+     "ap-southeast-1":   { "64": "ami-9cba7dff" },
+     "ap-southeast-2":   { "64": "ami-90d887f3" },
+     "us-west-2":        { "64": "ami-20203441" },
+     "us-west-1":        { "64": "ami-a6fc90c6" },
+     "eu-central-1":     { "64": "ami-084d5e64" },
+     "sa-east-1":        { "64": "ami-e908b085" }
+  }
+   },
+
+  "Outputs" : {
+	"BastionHostPublicIP" : {"Description" : "Bastion host IP Address", "Value" : { "Fn::Join" : [ "", [ { "Fn::GetAtt" : [ "FedoraInstance", "PublicIp" ]},":5901" ] ] }},
+    "MasterPrivateIP" : { "Description" : "Private IP Address of Master Instance:", "Value" : { "Fn::GetAtt" : [ "MasterInstance", "PrivateIp" ] } },
+    "Node1PrivateIP" : { "Description" : "Private IP Address of Node1 Instance:", "Value" : { "Fn::GetAtt" : [ "Node1Instance", "PrivateIp" ] } },
+    "Node2PrivateIP" : { "Description" : "Private IP Address of Node2 Instance:", "Value" : { "Fn::GetAtt" : [ "Node2Instance", "PrivateIp" ] } }
+  },
+  "Resources" : {
+    "TestDriveVPC" : {
+      "Type" : "AWS::EC2::VPC",
+      "Properties" : {
+        "EnableDnsSupport" : "true",
+        "CidrBlock" : { "Ref" : "VPCCIDR" },
+        "EnableDnsHostnames" : "false",
+        "Tags" : [{ "Value" : "[TestDriveInfra] VPC", "Key" : "Name" }, { "Value" : { "Ref" : "AWS::StackName" }, "Key" : "Application" } ]
+      }
+    },
+    "SubnetRouteTableAssociation" : {
+      "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties" : { "SubnetId" : { "Ref" : "TestDriveSubnet" }, "RouteTableId" : { "Ref" : "TestDriveRouteTable" } }
+    },
+    "MasterLAN1Interface" : {
+      "Type" : "AWS::EC2::NetworkInterface",
+      "Properties" : { "GroupSet" : [{ "Ref" : "SG" } ], "SubnetId" : { "Ref" : "PrivateSubnet" }, "Description" : "Master LAN1 network interface." }
+    },
+    "Node1LAN1Interface" : {
+      "Type" : "AWS::EC2::NetworkInterface",
+      "DependsOn" : "NAT",
+      "Properties" : { "GroupSet" : [{ "Ref" : "SG" } ], "SubnetId" : { "Ref" : "PrivateSubnet" }, "Description" : "Node1 LAN1 network interface." }
+    },
+    "TestDriveDHCPOptions" : {
+      "Type" : "AWS::EC2::DHCPOptions",
+      "DependsOn" : "Node1LAN1Interface",
+      "Properties" : {
+        "Tags" : [{
+            "Value" : {
+              "Ref" : "AWS::StackName"
+            },
+            "Key" : "Application"
+          }, {
+            "Value" : "[TestDriveInfra] DHCP options",
+            "Key" : "Name"
+          }
+        ],
+        "DomainNameServers" : [{ "Fn::GetAtt" : [ "Node1LAN1Interface", "PrimaryPrivateIpAddress" ] }, "AmazonProvidedDNS" ],
+        "DomainName" : "ec2.internal rhosepaas.com"
+      }
+    },
+    "TestDriveVPCDHCPOptionsAssociation" : {
+      "Type" : "AWS::EC2::VPCDHCPOptionsAssociation",
+      "Properties" : {
+        "VpcId" : {
+          "Ref" : "TestDriveVPC"
+        },
+        "DhcpOptionsId" : {
+          "Ref" : "TestDriveDHCPOptions"
+        }
+      }
+    },
+    "Node2LAN1Interface" : {
+      "Type" : "AWS::EC2::NetworkInterface",
+      "Properties" : { "GroupSet" : [{ "Ref" : "SG" } ], "SubnetId" : { "Ref" : "PrivateSubnet" }, "Description" : "Node2 LAN1 network interface." }
+    },
+
+  "NAT" : {
+  "DependsOn" : "TestDriveGatewayAttachment",
+  "Type" : "AWS::EC2::NatGateway",
+  "Properties" : {
+    "AllocationId" : { "Fn::GetAtt" : ["EIP", "AllocationId"]},
+    "SubnetId" : { "Ref" : "TestDriveSubnet"}
+  }
+},
+"EIP" : {
+  "Type" : "AWS::EC2::EIP",
+  "Properties" : {
+  "Domain" : "vpc"
+  }
+},
+"InstanceRole" : {
+  "Type" : "AWS::IAM::Role",
+  "Properties" : {
+    "AssumeRolePolicyDocument" : {
+      "Version" : "2012-10-17",
+      "Statement" : [{ "Effect" : "Allow", "Principal" : { "Service" : [ "ec2.amazonaws.com" ] }, "Action" : [ "sts:AssumeRole" ] } ]
+    },
+    "Path" : "/",
+    "Policies" : [{
+        "PolicyName" : "root",
+        "PolicyDocument" : {
+          "Version" : "2012-10-17",
+          "Statement" : [
+                            { "Effect" : "Allow", "Action" : [ "s3:ListBucket", "s3:PutObject", "s3:GetObject" ], "Resource" : "arn:aws:s3:::*" },
+                            { "Effect" : "Allow", "Action" : [ "ec2:DescribeNatGateways", "ec2:DeleteRoute", "ec2:ReplaceRoute", "ec2:CreateRoute", "ec2:DeleteNatGateway", "ec2:CreateNatGateway" ], "Resource" : "*" }
+          ] } } ]
+  }
+},
+"InstanceProfile" : {
+    "Type": "AWS::IAM::InstanceProfile",
+    "Properties": {
+        "Path": "/",
+        "Roles": [ { "Ref": "InstanceRole" } ]
+}
+},
+    "Node1Instance" : {
+      "Type" : "AWS::EC2::Instance",
+      "DependsOn":"TestDriveDHCPOptions",
+      "Properties" : {
+        "SourceDestCheck" : "false",
+        "Tags" : [{ "Value" : "[TestDriveInfra]Node1", "Key" : "Name" }, { "Value" : "Redhat Quick Start Testdrive", "Key" : "Owner" } ],
+        "BlockDeviceMappings" : [ { "DeviceName" : "/dev/sda1", "Ebs" : { "VolumeSize" : "30", "VolumeType":"gp2", "DeleteOnTermination" : "true" } }],
+        "ImageId" : { "Fn::FindInMap" : [ "AWSRegion2RHELAMI", { "Ref" : "AWS::Region" }, "64" ] },
+        "KeyName" : { "Ref" : "KeyPairName" },
+        "InstanceType" : { "Ref" : "Node1InstanceType" },
+        "UserData" : {
+          "Fn::Base64" : {
+            "Fn::Join" : [
+              "",
+              [
+                "#!/bin/bash \n",
+                "MY_IP=`(curl http://169.254.169.254/latest/meta-data/local-ipv4)` \n",
+                {"Fn::Join" : [ "", [ "echo '", {"Fn::GetAtt":[ "MasterLAN1Interface", "PrimaryPrivateIpAddress" ] }, " ose-master.rhosepaas.com ose-master", "'", " >> /etc/hosts",  "\n" ] ]},
+                {"Fn::Join" : [ "", [ "echo '", {"Fn::GetAtt":[ "Node1LAN1Interface", "PrimaryPrivateIpAddress" ] }, " ose-node1.rhosepaas.com ose-node1", "'", " >> /etc/hosts",  "\n" ] ]},
+                {"Fn::Join" : [ "", [ "echo '", {"Fn::GetAtt":[ "Node2LAN1Interface", "PrimaryPrivateIpAddress" ] }, " ose-node2.rhosepaas.com ose-node2", "'", " >> /etc/hosts",  "\n" ] ]},
+                { "Fn::Join" : [ "", [ "echo '", { "Ref" : "Credentials" }, "' | passwd root --stdin ", "\n" ] ] },
+                "/bin/sed -i 's/#PermitRootLogin yes/PermitRootLogin yes/g' /etc/ssh/sshd_config \n",
+                "/bin/sed -i 's/#PubkeyAuthentication yes/PubkeyAuthentication yes/g' /etc/ssh/sshd_config \n",
+                "/bin/sed -i \"s/$PasswordAuthentication no/$PasswordAuthentication yes/g\" /etc/ssh/sshd_config \n",
+                "service sshd restart \n",
+                "yum install -y wget unzip\n",
+                "yum install -y nfs-utils \n",
+                "yum install -y showmount \n",
+                "yum install -y rpcbind \n",
+                "cat /dev/zero | ssh-keygen -q -N '' \n",
+                "mkdir /opt/secure \n",
+                "/usr/bin/cp /root/.ssh/id_rsa* /opt/secure \n",
+                {"Fn::Join" : [ "", [ "echo '/opt/secure   ", { "Ref" : "VPCCIDR" }, "(ro,no_root_squash)", "'", " >> /etc/exports",  "\n" ] ]},
+                "/usr/bin/cat /root/.ssh/id_rsa.pub >> /root/.ssh/authorized_keys \n",
+                "systemctl restart rpcbind \n",
+                "systemctl restart nfs-server \n",
+                "systemctl enable nfs-server \n",
+                "yum install firewalld firewall-config \n",
+                "yum install -y atomic-openshift-utils \n",
+                "yum install -y atomic-openshift* openshift* etcd \n",
+                "/usr/bin/wget --directory-prefix=/root https://s3-us-west-2.amazonaws.com/redhat-quickstart/openshift/iptables \n",
+                "/usr/bin/wget --directory-prefix=/root https://s3-us-west-2.amazonaws.com/redhat-quickstart/openshift/cloudapps.rhosepaas.com.db \n",
+                "/usr/bin/wget --directory-prefix=/root https://s3-us-west-2.amazonaws.com/redhat-quickstart/openshift/rhosepaas.com.db \n",
+                "/usr/bin/wget --directory-prefix=/root https://s3-us-west-2.amazonaws.com/redhat-quickstart/openshift/named.conf \n",
+                "/usr/bin/wget --directory-prefix=/root https://s3-us-west-2.amazonaws.com/redhat-quickstart/openshift/nfs-script \n",
+                "/usr/bin/wget --directory-prefix=/root https://s3-us-west-2.amazonaws.com/redhat-quickstart/openshift/jq-1.3-2.el6.x86_64.rpm \n",
+                "/usr/bin/rpm -qa | grep jq \n",
+                "/usr/bin/wget --directory-prefix=/root https://s3.amazonaws.com/aws-cli/awscli-bundle.zip -o awscli-bundle.zip \n",
+                "unzip awscli-bundle.zip \n",
+                "sudo ./awscli-bundle/install -i /usr/local/aws -b /usr/local/bin/aws \n",
+                "/usr/bin/rpm -e $(/usr/bin/rpm -qa | grep rhui) \n",
+                "yum clean all \n",
+                { "Fn::Join" : [ "", [ "subscription-manager register --username=", { "Ref" : "RedhatPortalUsername" }, " --password=", { "Ref" : "RedhatPortalPassword" }, " --autosubscribe --force", "\n" ] ] },
+                "subscription-manager list --consumed > /var/log/redhat-subscription-details.log \n",
+                "subscription-manager repos --disable=* \n",
+                "subscription-manager repos --enable=rhel-7-server-rpms --enable=rhel-7-server-extras-rpms --enable=rhel-7-server-optional-rpms --enable=rhel-7-server-ose-3.2-rpms \n",
+                "yum -y install jq json git net-tools bind-utils iptables-services bridge-utils bash-completion python-virtualenv gcc \n",
+                "yum -y update \n",
+                "yum -y install docker \n",
+                "yum -y install bind* \n",
+                "/usr/bin/rpm -Uvh jq-1.3-2.el6.x86_64.rpm \n",
+                "sleep 60 \n",
+                "/usr/bin/cat /root/.ssh/id_rsa.pub >> /root/.ssh/authorized_keys \n",
+                "iptables -A INPUT -p tcp -m state --state NEW -m tcp --dport 53 -j ACCEPT \n",
+                "iptables -A INPUT -p udp -m state --state NEW -m udp --dport 53 -j ACCEPT \n",
+                "/sbin/service iptables save \n",
+                "service iptables restart \n",
+                "/usr/bin/cp /root/named.conf /etc/named.conf \n",
+                "/usr/bin/cp /root/cloudapps.rhosepaas.com.db /var/named/dynamic/cloudapps.rhosepaas.com.db \n",
+                "/usr/bin/cp /root/rhosepaas.com.db /var/named/dynamic/rhosepaas.com.db \n",
+                { "Fn::Join":[ "", [ "/bin/sed -i \"s/10.90.1.127/", { "Fn::GetAtt":[ "MasterLAN1Interface", "PrimaryPrivateIpAddress" ] }, "/g\" /var/named/dynamic/rhosepaas.com.db", "\n" ] ] },
+                { "Fn::Join":[ "", [ "/bin/sed -i \"s/10.90.1.38/", { "Fn::GetAtt":[ "Node1LAN1Interface", "PrimaryPrivateIpAddress" ] }, "/g\" /var/named/dynamic/rhosepaas.com.db", "\n" ] ] },
+                { "Fn::Join":[ "", [ "/bin/sed -i \"s/10.90.1.146/", { "Fn::GetAtt":[ "Node2LAN1Interface", "PrimaryPrivateIpAddress" ] }, "/g\" /var/named/dynamic/rhosepaas.com.db", "\n" ] ] },
+                { "Fn::Join":[ "", [ "/bin/sed -i \"s/10.90.1.38/", { "Fn::GetAtt":[ "Node1LAN1Interface", "PrimaryPrivateIpAddress" ] }, "/g\" /var/named/dynamic/rhosepaas.com.db", "\n" ] ] },
+                { "Fn::Join":[ "", [ "/bin/sed -i \"s/10.90.1.38/", { "Fn::GetAtt":[ "Node1LAN1Interface", "PrimaryPrivateIpAddress" ] }, "/g\" /var/named/dynamic/cloudapps.rhosepaas.com.db", "\n" ] ] },
+                "/bin/sed -i '/0.2$/d' /etc/resolv.conf \n",
+                "/bin/sed -i \"s/PEERDNS=\\\"yes\\\"/PEERDNS=\\\"no\\\"/g\" /etc/sysconfig/network-scripts/ifcfg-eth0 \n",
+                "/bin/chmod 644 /etc/named.conf \n",
+                "systemctl restart iptables \n",
+                "systemctl start named \n",
+                "systemctl enable named \n"
+              ]
+            ]
+          }
+        },
+        "NetworkInterfaces" : [{
+            "DeviceIndex" : "0",
+            "NetworkInterfaceId" : {
+              "Ref" : "Node1LAN1Interface"
+            }
+          }
+        ]
+      }
+    },
+    "MasterInstance" : {
+      "Type" : "AWS::EC2::Instance",
+      "DependsOn" : ["FedoraInstance", "Node1Instance"],
+      "Properties" : {
+        "SourceDestCheck" : "false",
+        "Tags" : [{ "Value" : "[TestDriveInfra]Master", "Key" : "Name" }, { "Value" : "Redhat Quick Start Testdrive", "Key" : "Owner" } ],
+        "BlockDeviceMappings" : [ { "DeviceName" : "/dev/sda1", "Ebs" : { "VolumeSize" : "30", "VolumeType":"gp2", "DeleteOnTermination" : "true" } }],
+        "ImageId" : { "Fn::FindInMap" : [ "AWSRegion2RHELAMI", { "Ref" : "AWS::Region" }, "64" ] },
+        "KeyName" : { "Ref" : "KeyPairName" },
+
+        "InstanceType" : { "Ref" : "MasterInstanceType" },
+        "UserData" : {
+          "Fn::Base64" : {
+            "Fn::Join" : [
+              "",
+              [
+                "#!/bin/bash \n",
+                "MY_IP=`(curl http://169.254.169.254/latest/meta-data/local-ipv4)` \n",
+                {"Fn::Join" : [ "", [ "echo '", {"Fn::GetAtt":[ "MasterLAN1Interface", "PrimaryPrivateIpAddress" ]}, " ose-master.rhosepaas.com ose-master", "'", " >> /etc/hosts",  "\n" ] ]},
+                {"Fn::Join" : [ "", [ "echo '", {"Fn::GetAtt":[ "Node1LAN1Interface", "PrimaryPrivateIpAddress" ]}, " ose-node1.rhosepaas.com ose-node1", "'", " >> /etc/hosts",  "\n" ] ]},
+                {"Fn::Join" : [ "", [ "echo '", {"Fn::GetAtt":[ "Node2LAN1Interface", "PrimaryPrivateIpAddress" ]}, " ose-node2.rhosepaas.com ose-node2", "'", " >> /etc/hosts",  "\n" ] ]},
+                { "Fn::Join" : [ "", [ "echo '", { "Ref" : "Credentials" }, "' | passwd root --stdin ", "\n" ] ] },
+                "/bin/sed -i 's/#PermitRootLogin yes/PermitRootLogin yes/g' /etc/ssh/sshd_config \n",
+                "/bin/sed -i \"s/$PasswordAuthentication no/$PasswordAuthentication yes/g\" /etc/ssh/sshd_config \n",
+                "/usr/bin/wget --directory-prefix=/root https://s3-us-west-2.amazonaws.com/redhat-quickstart/openshift/iptables \n",
+                "/bin/sed -i 's/#PubkeyAuthentication yes/PubkeyAuthentication yes/g' /etc/ssh/sshd_config \n",
+                "service sshd restart \n",
+                "yum install -y wget unzip \n",
+                "yum install -y showmount \n",
+                "yum install -y atomic-openshift-utils \n",
+                "yum install -y atomic-openshift* openshift* etcd \n",
+                "/usr/bin/wget --directory-prefix=/root https://s3-us-west-2.amazonaws.com/redhat-quickstart/openshift/jq-1.3-2.el6.x86_64.rpm \n",
+                "/usr/bin/wget --directory-prefix=/root https://s3-us-west-2.amazonaws.com/redhat-quickstart/openshift/ansible_hosts_3_2 \n",
+                "/usr/bin/wget --directory-prefix=/root https://s3-us-west-2.amazonaws.com/redhat-quickstart/openshift/cfninstall \n",
+                "/usr/bin/wget --directory-prefix=/root https://s3-us-west-2.amazonaws.com/redhat-quickstart/openshift/nfs-script \n",
+                "/usr/bin/wget --directory-prefix=/root/.ssh https://s3-us-west-2.amazonaws.com/redhat-quickstart/openshift/config \n",
+                "/usr/bin/wget --directory-prefix=/root https://s3-us-west-2.amazonaws.com/redhat-quickstart/openshift/ssh-test.sh \n",
+                "/usr/bin/wget --directory-prefix=/root https://s3-us-west-2.amazonaws.com/redhat-quickstart/openshift/v2_install_script \n",
+                "/usr/bin/wget --directory-prefix=/root https://s3-us-west-2.amazonaws.com/redhat-quickstart/openshift/install_pods2 \n",
+                "/usr/bin/wget --directory-prefix=/etc/systemd/system/ https://s3-us-west-2.amazonaws.com/redhat-quickstart/openshift/openshift_install_v1.service \n",
+                "/usr/bin/wget --directory-prefix=/etc/systemd/system/ https://s3-us-west-2.amazonaws.com/redhat-quickstart/openshift/openshift_install_v1.timer \n",
+                "/usr/bin/rpm -qa | grep jq \n",
+                "/usr/bin/wget --directory-prefix=/root https://s3.amazonaws.com/aws-cli/awscli-bundle.zip -o awscli-bundle.zip \n",
+                "unzip awscli-bundle.zip \n",
+                "/usr/bin/mv /root/v2_install_script /root/v1_install_script \n",
+                "/usr/bin/mv /root/install_pods2 /root/install_pods \n",
+                "sudo ./awscli-bundle/install -i /usr/local/aws -b /usr/local/bin/aws \n",
+                "/usr/bin/rpm -e $(/usr/bin/rpm -qa | grep rhui) \n",
+                "yum clean all \n",
+                { "Fn::Join" : [ "", [ "subscription-manager register --username=", { "Ref" : "RedhatPortalUsername" }, " --password=", { "Ref" : "RedhatPortalPassword" }, " --autosubscribe --force", "\n" ] ] },
+                "subscription-manager list --consumed > /var/log/redhat-subscription-details.log \n",
+                "subscription-manager repos --disable=* \n",
+                "subscription-manager repos --enable=rhel-7-server-rpms --enable=rhel-7-server-extras-rpms --enable=rhel-7-server-optional-rpms --enable=rhel-7-server-ose-3.2-rpms \n",
+                "yum -y install jq json git net-tools httpd-tools bind-utils iptables-services bridge-utils bash-completion python-virtualenv gcc \n",
+                "yum -y update \n",
+                "yum -y install docker \n",
+                "/usr/bin/rpm -Uvh /root/jq-1.3-2.el6.x86_64.rpm \n",
+                "echo 'testing' >> /root/abc.txt \n",
+                "iptables -A INPUT -p tcp -m state --state NEW -m tcp --dport 53 -j ACCEPT \n",
+                "iptables -A INPUT -p udp -m state --state NEW -m udp --dport 53 -j ACCEPT \n",
+                "/sbin/service iptables save \n",
+                "service iptables restart \n",
+                "yum -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm \n",
+                "sleep 120 \n",
+                "/bin/sed -i 's/^enabled=1/enabled=0/g' /etc/yum.repos.d/epel.repo \n",
+                "yum -y --enablerepo=epel install ansible \n",
+                "cd ~ ; git clone https://github.com/openshift/openshift-ansible ; cd /root/openshift-ansible ; git checkout 242aeba73a60a7ad113a80e8141478fe67b695a5 \n",
+                "sleep 120 \n",
+                "/usr/bin/cp /root/ansible_hosts_3_2 /etc/ansible/hosts \n",
+                "chmod 755 /root/cfninstall \n",
+                "systemctl restart iptables \n",
+                { "Fn::Join":[ "", [ "/bin/sed -i \"s/10.90.1.189/", { "Fn::GetAtt":[ "MasterLAN1Interface", "PrimaryPrivateIpAddress" ] }, "/g\" /etc/ansible/hosts", "\n" ] ] },
+                { "Fn::Join":[ "", [ "/bin/sed -i \"s/10.90.1.147/", { "Fn::GetAtt":[ "Node1LAN1Interface", "PrimaryPrivateIpAddress" ] }, "/g\" /etc/ansible/hosts", "\n" ] ] },
+                { "Fn::Join":[ "", [ "/bin/sed -i \"s/10.90.1.172/", { "Fn::GetAtt":[ "Node2LAN1Interface", "PrimaryPrivateIpAddress" ] }, "/g\" /etc/ansible/hosts", "\n" ] ] },
+                "/bin/sh /root/ssh-test.sh \n",
+                "sleep 30 \n",
+                "/bin/sh /root/cfninstall \n",
+                "/bin/sed -i '/0.2$/d' /etc/resolv.conf \n",
+                "/bin/sed -i \"s/PEERDNS=\\\"yes\\\"/PEERDNS=\\\"no\\\"/g\" /etc/sysconfig/network-scripts/ifcfg-eth0 \n",
+                "chmod 755 /root/v1_install_script \n",
+                "chmod 755 /root/install_pods \n",
+                "/bin/sh /root/nfs-script > /var/log/nfs-script.log 2>&1 \n",
+                "chmod 777 /etc/systemd/system/openshift_install_v1.service \n",
+                "chmod 777 /etc/systemd/system/openshift_install_v1.timer \n",
+                "systemctl start openshift_install_v1.timer \n",
+                "systemctl enable openshift_install_v1.timer \n",
+                { "Fn::Join":[ "", [ "echo \"", "/bin/cfn-signal -e 0 '", { "Ref":"ClientAPPWaitHandle" }, "'\" >> /root/install_pods \n" ] ] }
+              ]
+            ]
+          }
+        },
+        "NetworkInterfaces" : [{
+            "DeviceIndex" : "0",
+            "NetworkInterfaceId" : {
+              "Ref" : "MasterLAN1Interface"
+            }
+          }
+        ]
+      }
+    },
+    "ClientAPPWaitHandle" : {
+      "Type" : "AWS::CloudFormation::WaitConditionHandle"
+    },
+    "ClientAPPWaitCondition" : {
+      "Type" : "AWS::CloudFormation::WaitCondition",
+      "Properties" : {
+        "Handle" : {
+          "Ref" : "ClientAPPWaitHandle"
+        },
+        "Timeout" : "3600"
+      },
+      "DependsOn" : "MasterInstance"
+    },
+    "TestDriveRoute" : {
+      "Type" : "AWS::EC2::Route",
+      "Properties" : {
+        "GatewayId" : { "Ref" : "TestDriveInternetGateway" },
+        "DestinationCidrBlock" : "0.0.0.0/0",
+        "RouteTableId" : { "Ref" : "TestDriveRouteTable" }
+      },
+      "DependsOn" : "TestDriveGatewayAttachment"
+    },
+    "TestDriveRoute2":{
+         "Type":"AWS::EC2::Route",
+         "Properties":{
+            "DestinationCidrBlock":"10.1.0.0/22",
+      "RouteTableId":{
+               "Ref":"TestDriveRouteTable"
+            },
+      "NetworkInterfaceId": {
+        "Ref":"Node1LAN1Interface"
+      }
+         },
+         "DependsOn":"ClientAPPWaitCondition"
+      },
+    "PrivateRouteTable" : {
+      "Type" : "AWS::EC2::RouteTable",
+      "Properties" : {
+        "VpcId" : {
+          "Ref" : "TestDriveVPC"
+        },
+        "Tags" : [{
+            "Key" : "Application",
+            "Value" : "Private"
+          }
+        ]
+      }
+    },
+    "PrivateRoute" : {
+      "Type" : "AWS::EC2::Route",
+      "DependsOn" : "NAT",
+      "Properties" : {
+        "RouteTableId" : { "Ref" : "PrivateRouteTable" },
+        "DestinationCidrBlock" : "0.0.0.0/0",
+        "NatGatewayId" : { "Ref" : "NAT" }
+      }
+    },
+
+    "IBSecurityGroup" : {
+      "Type" : "AWS::EC2::SecurityGroup",
+      "Properties" : {
+        "SecurityGroupIngress" : [
+        {
+            "ToPort" : "22",
+            "IpProtocol" : "tcp",
+            "CidrIp" : { "Ref" : "VPCCIDR" },
+            "FromPort" : "22"
+          },
+		  { "IpProtocol" : "tcp", "FromPort" : "5901", "ToPort" : "5901", "CidrIp" : {"Ref":"AllowConnectionFrom"} },
+          { "IpProtocol" : "tcp", "FromPort" : "22", "ToPort" : "22", "CidrIp" : {"Ref":"AllowConnectionFrom"} }
+
+        ],
+        "VpcId" : {
+          "Ref" : "TestDriveVPC"
+        },
+        "GroupDescription" : "Allow All Traffic",
+        "SecurityGroupEgress" : [{
+            "ToPort" : "-1",
+            "IpProtocol" : "-1",
+            "CidrIp" : "0.0.0.0/0",
+            "FromPort" : "-1"
+          }
+        ]
+      }
+    },
+    "SG" : {
+      "Type" : "AWS::EC2::SecurityGroup",
+      "Properties" : {
+        "VpcId" : {
+          "Ref" : "TestDriveVPC"
+        },
+        "GroupDescription" : "Allow SSH",
+        "SecurityGroupIngress" : [{
+            "IpProtocol" : "tcp",
+            "FromPort" : "22",
+            "ToPort" : "22",
+            "CidrIp" : { "Ref" : "VPCCIDR" }
+          },
+          {
+            "IpProtocol" : "tcp",
+            "FromPort" : "53",
+            "ToPort" : "53",
+            "CidrIp" : { "Ref" : "VPCCIDR" }
+          },
+          {
+            "IpProtocol" : "UDP",
+            "FromPort" : "53",
+            "ToPort" : "53",
+            "CidrIp" : { "Ref" : "VPCCIDR" }
+          },
+          {
+            "IpProtocol" : "tcp",
+            "FromPort" : "80",
+            "ToPort" : "80",
+            "CidrIp" : { "Ref" : "VPCCIDR" }
+          },
+          {
+            "IpProtocol" : "tcp",
+            "FromPort" : "443",
+            "ToPort" : "443",
+            "CidrIp" : { "Ref" : "VPCCIDR" }
+          },
+          {
+            "IpProtocol" : "tcp",
+            "FromPort" : "4789",
+            "ToPort" : "4789",
+            "CidrIp" : { "Ref" : "VPCCIDR" }
+          },
+          {
+            "IpProtocol" : "udp",
+            "FromPort" : "4789",
+            "ToPort" : "4789",
+            "CidrIp" : { "Ref" : "VPCCIDR" }
+          },
+          {
+            "IpProtocol" : "tcp",
+            "FromPort" : "8443",
+            "ToPort" : "8443",
+            "CidrIp" : { "Ref" : "VPCCIDR" }
+          },
+          {
+            "IpProtocol" : "tcp",
+            "FromPort" : "10250",
+            "ToPort" : "10250",
+            "CidrIp" : { "Ref" : "VPCCIDR" }
+          },
+
+          {
+            "IpProtocol" : "udp",
+            "FromPort" : "10250",
+            "ToPort" : "10250",
+            "CidrIp" : { "Ref" : "VPCCIDR" }
+          },
+             {
+            "ToPort" : "-1",
+            "IpProtocol" : "icmp",
+            "CidrIp" : { "Ref" : "VPCCIDR" },
+            "FromPort" : "-1"
+          },
+          {
+            "IpProtocol" : "tcp",
+            "FromPort" : "2049",
+            "ToPort" : "2049",
+            "CidrIp" : { "Ref" : "VPCCIDR" }
+          },
+          {
+            "IpProtocol" : "udp",
+            "FromPort" : "2049",
+            "ToPort" : "2049",
+            "CidrIp" : { "Ref" : "VPCCIDR" }
+          },
+          {
+          "ToPort" : "-1",
+          "IpProtocol" : "-1",
+          "CidrIp" : { "Ref" : "VPCCIDR" },
+          "FromPort" : "-1"
+          }
+
+        ],
+        "SecurityGroupEgress" : [{
+            "IpProtocol" : "-1",
+            "FromPort" : "-1",
+            "ToPort" : "-1",
+            "CidrIp" : "0.0.0.0/0"
+          }
+        ]
+      }
+    },
+
+    "TestDriveSubnet" : {
+      "Type" : "AWS::EC2::Subnet",
+      "Properties" : {
+        "VpcId" : {
+          "Ref" : "TestDriveVPC"
+        },
+        "CidrBlock" : { "Ref" : "PublicSubnetCIDR" },
+        "MapPublicIpOnLaunch" : "true",
+        "Tags" : [{ "Value" : "[TestDriveInfra] Subnet", "Key" : "Name" },  { "Value" : { "Ref" : "AWS::StackName" }, "Key" : "Application" }]
+      }
+    },
+    "PrvSubRTAssociation" : {
+      "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties" : {
+        "RouteTableId" : {
+          "Ref" : "PrivateRouteTable"
+        },
+        "SubnetId" : {
+          "Ref" : "PrivateSubnet"
+        }
+      }
+    },
+    "PrivateSubnet" : {
+      "Type" : "AWS::EC2::Subnet",
+      "Properties" : {
+        "VpcId" : { "Ref" : "TestDriveVPC" },
+        "CidrBlock" : { "Ref" : "PrivateSubnetCIDR" },
+        "MapPublicIpOnLaunch" : "false",
+        "Tags" : [{ "Value" : "[TestDriveInfra] PrivateSubnet", "Key" : "Name" }, { "Value" : { "Ref" : "AWS::StackName" }, "Key" : "Application" } ]
+      }
+    },
+    "TestDriveGatewayAttachment" : {
+      "Type" : "AWS::EC2::VPCGatewayAttachment",
+      "Properties" : {
+        "VpcId" : {
+          "Ref" : "TestDriveVPC"
+        },
+        "InternetGatewayId" : {
+          "Ref" : "TestDriveInternetGateway"
+        }
+      }
+    },
+    "CustomRole" : {
+      "Type" : "AWS::IAM::Role",
+      "Properties" : {
+        "Path" : "/",
+        "Policies" : [{
+            "PolicyName" : "EC2-access",
+            "PolicyDocument" : {
+              "Version" : "2012-10-17",
+              "Statement" : [{
+                  "Action" : "ec2:*",
+                  "Resource" : "*",
+                  "Effect" : "Allow"
+                }, {
+                  "Action" : "elasticloadbalancing:*",
+                  "Resource" : "*",
+                  "Effect" : "Allow"
+                }, {
+                  "Action" : "cloudwatch:*",
+                  "Resource" : "*",
+                  "Effect" : "Allow"
+                }, {
+                  "Action" : "autoscaling:*",
+                  "Resource" : "*",
+                  "Effect" : "Allow"
+                }
+              ]
+            }
+          }
+        ],
+        "AssumeRolePolicyDocument" : {
+          "Version" : "2012-10-17",
+          "Statement" : [{
+              "Action" : [
+                "sts:AssumeRole"
+              ],
+              "Effect" : "Allow",
+              "Principal" : {
+                "Service" : [
+                  "ec2.amazonaws.com"
+                ]
+              }
+            }
+          ]
+        }
+      }
+    },
+    "TestDriveRouteTable" : {
+      "Type" : "AWS::EC2::RouteTable",
+      "Properties" : {
+        "VpcId" : {
+          "Ref" : "TestDriveVPC"
+        },
+        "Tags" : [{
+            "Value" : {
+              "Ref" : "AWS::StackName"
+            },
+            "Key" : "Application"
+          }
+        ]
+      }
+    },
+    "TestDriveInternetGateway" : {
+      "Type" : "AWS::EC2::InternetGateway",
+      "Properties" : {
+        "Tags" : [{
+            "Value" : "[TestDriveInfra] Internet Gateway",
+            "Key" : "Name"
+          }, {
+            "Value" : {
+              "Ref" : "AWS::StackName"
+            },
+            "Key" : "Application"
+          }
+        ]
+      }
+    },
+    "Node2Instance" : {
+      "Type" : "AWS::EC2::Instance",
+      "DependsOn":["TestDriveDHCPOptions", "Node1Instance"],
+      "Properties" : {
+        "SourceDestCheck" : "false",
+        "BlockDeviceMappings" : [ { "DeviceName" : "/dev/sda1", "Ebs" : { "VolumeSize" : "30", "VolumeType":"gp2", "DeleteOnTermination" : "true" } }],
+        "Tags" : [{ "Value" : "[TestDriveInfra]Node2", "Key" : "Name" }, { "Value" : "Redhat Quick Start Testdrive", "Key" : "Owner" } ],
+        "ImageId" : { "Fn::FindInMap" : [ "AWSRegion2RHELAMI", { "Ref" : "AWS::Region" }, "64"  ] },
+        "KeyName" : { "Ref" : "KeyPairName" },
+        "UserData" : {
+          "Fn::Base64" : {
+            "Fn::Join" : [
+              "",
+              [
+                "#!/bin/bash \n",
+                "MY_IP=`(curl http://169.254.169.254/latest/meta-data/local-ipv4)` \n",
+                {"Fn::Join" : [ "", [ "echo ", "'", {"Fn::GetAtt":[ "MasterLAN1Interface", "PrimaryPrivateIpAddress"]}, " ose-master.rhosepaas.com ose-master", "'", " >> /etc/hosts",  "\n" ] ]},
+                {"Fn::Join" : [ "", [ "echo ", "'", {"Fn::GetAtt":[ "Node1LAN1Interface", "PrimaryPrivateIpAddress"]}, " ose-node1.rhosepaas.com ose-node1", "'", " >> /etc/hosts",  "\n" ] ]},
+                {"Fn::Join" : [ "", [ "echo ", "'", {"Fn::GetAtt":[ "Node2LAN1Interface", "PrimaryPrivateIpAddress"]}, " ose-node2.rhosepaas.com ose-node2", "'", " >> /etc/hosts",  "\n" ] ]},
+                { "Fn::Join" : [ "", [ "echo '", { "Ref" : "Credentials" }, "' | passwd root --stdin ", "\n" ] ] },
+                "/bin/sed -i 's/#PermitRootLogin yes/PermitRootLogin yes/g' /etc/ssh/sshd_config \n",
+                "/bin/sed -i 's/#PubkeyAuthentication yes/PubkeyAuthentication yes/g' /etc/ssh/sshd_config \n",
+                "/bin/sed -i \"s/$PasswordAuthentication no/$PasswordAuthentication yes/g\" /etc/ssh/sshd_config \n",
+                "service sshd restart \n",
+                "yum install -y wget unzip \n",
+                "yum install -y showmount \n",
+                "yum install -y atomic-openshift-utils \n",
+                "yum install -y atomic-openshift* openshift* etcd \n",
+                "/usr/bin/wget --directory-prefix=/root https://s3-us-west-2.amazonaws.com/redhat-quickstart/openshift/jq-1.3-2.el6.x86_64.rpm \n",
+                "/usr/bin/wget --directory-prefix=/root https://s3-us-west-2.amazonaws.com/redhat-quickstart/openshift/iptables \n",
+                "/usr/bin/wget --directory-prefix=/root https://s3-us-west-2.amazonaws.com/redhat-quickstart/openshift/nfs-script \n",
+                "/usr/bin/rpm -qa | grep jq \n",
+                "/usr/bin/wget --directory-prefix=/root https://s3.amazonaws.com/aws-cli/awscli-bundle.zip -o awscli-bundle.zip \n",
+                "unzip awscli-bundle.zip \n",
+                "sudo ./awscli-bundle/install -i /usr/local/aws -b /usr/local/bin/aws \n",
+                "/usr/bin/rpm -e $(/usr/bin/rpm -qa | grep rhui) \n",
+                "yum clean all \n",
+                { "Fn::Join" : [ "", [ "subscription-manager register --username=", { "Ref" : "RedhatPortalUsername" }, " --password=", { "Ref" : "RedhatPortalPassword" }, " --autosubscribe --force", "\n" ] ] },
+                "subscription-manager list --consumed > /var/log/redhat-subscription-details.log \n",
+                "subscription-manager repos --disable=* \n",
+                "subscription-manager repos --enable=rhel-7-server-rpms --enable=rhel-7-server-extras-rpms --enable=rhel-7-server-optional-rpms --enable=rhel-7-server-ose-3.2-rpms \n",
+                "yum -y install jq json git net-tools bind-utils iptables-services bridge-utils bash-completion python-virtualenv gcc \n",
+                "yum -y update \n",
+                "yum -y install docker \n",
+                "sleep 120 \n",
+                "iptables -A INPUT -p tcp -m state --state NEW -m tcp --dport 53 -j ACCEPT \n",
+                "iptables -A INPUT -p udp -m state --state NEW -m udp --dport 53 -j ACCEPT \n",
+                "/sbin/service iptables save \n",
+                "service iptables restart \n",
+                "/bin/sh /root/nfs-script > /var/log/nfs-script.log 2>&1 \n",
+                "/usr/bin/rpm -Uvh /root/jq-1.3-2.el6.x86_64.rpm \n",
+                "/bin/sed -i '/0.2$/d' /etc/resolv.conf \n",
+                "/bin/sed -i \"s/PEERDNS=\\\"yes\\\"/PEERDNS=\\\"no\\\"/g\" /etc/sysconfig/network-scripts/ifcfg-eth0 \n"              ]
+            ]
+          }
+        },
+        "InstanceType" : {
+          "Ref" : "Node2InstanceType"
+        },
+        "NetworkInterfaces" : [{
+            "DeviceIndex" : "0",
+            "NetworkInterfaceId" : {
+              "Ref" : "Node2LAN1Interface"
+            }
+          }
+        ]
+      }
+    },
+    "FedoraInstance" : {
+      "Type" : "AWS::EC2::Instance",
+      "DependsOn" : "NAT",
+      "Properties" : {
+        "SourceDestCheck" : "false",
+        "Tags" : [{ "Value" : "[RedHatTestDrive]Fedora", "Key" : "Name" }, { "Value" : "Redhat Quick Start Testdrive", "Key" : "Owner" } ],
+        "ImageId" : { "Fn::FindInMap" : [ "AWSRegion2FedoraAMI", { "Ref" : "AWS::Region" }, "64"  ] },
+        "KeyName" : { "Ref" : "KeyPairName" },
+        "InstanceType" : { "Ref" : "BastionInstanceType" },
+        "NetworkInterfaces" : [{ "SubnetId" : { "Ref" : "TestDriveSubnet" },
+            "DeviceIndex" : "0",
+            "GroupSet" : [{ "Ref" : "IBSecurityGroup" } ],
+            "Description" : "eth0",
+            "AssociatePublicIpAddress" : "true"
+          }
+        ],
+        "UserData" : {
+          "Fn::Base64" : {
+            "Fn::Join" : [
+              "",
+              [
+              "#!/bin/bash \n",
+              "dnf install -y curl wget \n",
+              "mkdir /tmp/userdata \n",
+              "# VNC Setup \n",
+              "curl https://s3-us-west-2.amazonaws.com/redhat-quickstart/userdata-vncsetup.sh -o /tmp/userdata/userdata-vncsetup.sh \n",
+              "echo '",{"Ref":"ClientAPPWaitHandle"},"' > /tmp/userdata/cfn-signal.url \n",
+              "chmod u+x /tmp/userdata/* \n",
+              "bash -x /tmp/userdata/userdata-vncsetup.sh ", {"Ref":"BastionPassword"}, " ", {"Ref":"BastionPassword"}, " &> /var/log/userdata-vncsetup.log \n",
+              "dnf install -y firefox unzip \n",
+              "/usr/bin/wget --directory-prefix=/root https://s3-us-west-2.amazonaws.com/redhat-quickstart/openshift/oc-3.2.0.44-linux.tar.gz \n",
+              "systemctl disable firewalld \n",
+              "systemctl stop firewalld \n",
+              "sleep 120 \n",
+              "/usr/bin/tar -zxvf /root/oc-3.2.0.44-linux.tar.gz \n",
+              "sleep 30 \n",
+              "/usr/bin/cp /root/mnt/redhat/staging-cds/ose-clients-3.2.0.44/usr/share/atomic-openshift/linux/oc /bin/ \n",
+              "chmod +x /bin/oc \n",
+              "oc version > /root/oc-ver.log \n",
+              {"Fn::Join" :[ "", [ "echo '", {"Fn::GetAtt":[ "MasterLAN1Interface", "PrimaryPrivateIpAddress" ]}, " ose-master.rhosepaas.com ose-master", "'", " >> /etc/hosts",  "\n" ] ]},
+              {"Fn::Join" :[ "", [ "echo '", {"Fn::GetAtt":[ "Node1LAN1Interface", "PrimaryPrivateIpAddress" ]}, " ose-node1.rhosepaas.com ose-node1", "'", " >> /etc/hosts",  "\n" ] ]},
+              {"Fn::Join" :[ "", [ "echo '", {"Fn::GetAtt":[ "Node2LAN1Interface", "PrimaryPrivateIpAddress" ]}, " ose-node2.rhosepaas.com ose-node2", "'", " >> /etc/hosts",  "\n" ] ]},
+              "/bin/sed -i 's/#PubkeyAuthentication yes/PubkeyAuthentication yes/g' /etc/ssh/sshd_config \n",
+              "/bin/sed -i \"s/$PasswordAuthentication no/$PasswordAuthentication yes/g\" /etc/ssh/sshd_config \n",
+              "/usr/bin/wget --directory-prefix=/root https://s3.amazonaws.com/aws-cli/awscli-bundle.zip -o awscli-bundle.zip \n",
+              "/bin/sed -i '/0.2$/d' /etc/resolv.conf \n",
+              "/bin/sed -i \"s/PEERDNS=\\\"yes\\\"/PEERDNS=\\\"no\\\"/g\" /etc/sysconfig/network-scripts/ifcfg-eth0 \n",
+              "unzip awscli-bundle.zip \n",
+              "sudo ./awscli-bundle/install -i /usr/local/aws -b /usr/local/bin/aws \n",
+              "dnf install -y git \n"
+              ]
+            ]
+          }
+        }
+      }
+    }
+  }
+}
