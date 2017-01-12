@@ -334,6 +334,8 @@
                 {"Fn::Join" : [ "", [ "echo '", {"Fn::GetAtt":[ "Node1LAN1Interface", "PrimaryPrivateIpAddress" ]}, " ose-node1.rhosepaas.com ose-node1", "'", " >> /etc/hosts",  "\n" ] ]},
                 {"Fn::Join" : [ "", [ "echo '", {"Fn::GetAtt":[ "Node2LAN1Interface", "PrimaryPrivateIpAddress" ]}, " ose-node2.rhosepaas.com ose-node2", "'", " >> /etc/hosts",  "\n" ] ]},
                 { "Fn::Join" : [ "", [ "echo '", { "Ref" : "Credentials" }, "' | passwd root --stdin ", "\n" ] ] },
+                "echo 95.101.84.251 cdn.redhat.com >> /etc/hosts\n",
+                "echo 209.132.182.63 registry.access.redhat.com >> /etc/hosts\n",
                 "/bin/sed -i 's/#PermitRootLogin yes/PermitRootLogin yes/g' /etc/ssh/sshd_config \n",
                 "/bin/sed -i \"s/$PasswordAuthentication no/$PasswordAuthentication yes/g\" /etc/ssh/sshd_config \n",
                 "/usr/bin/wget --directory-prefix=/root https://s3-us-west-2.amazonaws.com/redhat-quickstart/openshift/iptables \n",
@@ -397,7 +399,9 @@
                 "chmod 777 /etc/systemd/system/openshift_install_v1.service \n",
                 "chmod 777 /etc/systemd/system/openshift_install_v1.timer \n",
                 "systemctl start openshift_install_v1.timer \n",
-                "systemctl enable openshift_install_v1.timer \n",
+                "systemctl disable openshift_install_v1.timer \n",
+                "systemctl disable openshift_install_v1.service\n",
+                {"Fn::Join" : [ "", [ "echo namserver ", "'", {"Fn::GetAtt":[ "Node1LAN1Interface", "PrimaryPrivateIpAddress"]}, "", "'", " >> /etc/resolv.conf",  "\n" ] ]},
                 { "Fn::Join":[ "", [ "echo \"", "/bin/cfn-signal -e 0 '", { "Ref":"ClientAPPWaitHandle" }, "'\" >> /root/install_pods \n" ] ] }
               ]
             ]
@@ -739,6 +743,8 @@
                 {"Fn::Join" : [ "", [ "echo ", "'", {"Fn::GetAtt":[ "Node1LAN1Interface", "PrimaryPrivateIpAddress"]}, " ose-node1.rhosepaas.com ose-node1", "'", " >> /etc/hosts",  "\n" ] ]},
                 {"Fn::Join" : [ "", [ "echo ", "'", {"Fn::GetAtt":[ "Node2LAN1Interface", "PrimaryPrivateIpAddress"]}, " ose-node2.rhosepaas.com ose-node2", "'", " >> /etc/hosts",  "\n" ] ]},
                 { "Fn::Join" : [ "", [ "echo '", { "Ref" : "Credentials" }, "' | passwd root --stdin ", "\n" ] ] },
+                "/usr/bin/echo 95.101.84.251 cdn.redhat.com >> /etc/hosts\n",
+                "/usr/bin/echo 209.132.182.63 registry.access.redhat.com >> /etc/hosts\n",
                 "/bin/sed -i 's/#PermitRootLogin yes/PermitRootLogin yes/g' /etc/ssh/sshd_config \n",
                 "/bin/sed -i 's/#PubkeyAuthentication yes/PubkeyAuthentication yes/g' /etc/ssh/sshd_config \n",
                 "/bin/sed -i \"s/$PasswordAuthentication no/$PasswordAuthentication yes/g\" /etc/ssh/sshd_config \n",
@@ -771,6 +777,7 @@
                 "/bin/sh /root/nfs-script > /var/log/nfs-script.log 2>&1 \n",
                 "/usr/bin/rpm -Uvh /root/jq-1.3-2.el6.x86_64.rpm \n",
                 "/bin/sed -i '/0.2$/d' /etc/resolv.conf \n",
+                {"Fn::Join" : [ "", [ "echo namserver ", "'", {"Fn::GetAtt":[ "Node1LAN1Interface", "PrimaryPrivateIpAddress"]}, "", "'", " >> /etc/resolv.conf",  "\n" ] ]},
                 "/bin/sed -i \"s/PEERDNS=\\\"yes\\\"/PEERDNS=\\\"no\\\"/g\" /etc/sysconfig/network-scripts/ifcfg-eth0 \n"              ]
             ]
           }
