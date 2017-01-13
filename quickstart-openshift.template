@@ -7,7 +7,7 @@
         { "Label" : { "default" : "Redhat Customer Portal Authentication" }, "Parameters" : ["RedhatPortalUsername", "RedhatPortalPassword" ] },
         { "Label" : { "default" : "Instances Configuration" }, "Parameters" : ["KeyPairName", "Credentials", "BastionPassword", "MasterInstanceType", "Node1InstanceType", "Node2InstanceType", "BastionInstanceType", "AllowConnectionFrom" ] },
         { "Label" : { "default" : "Network Configuration" }, "Parameters" : [ "VPCCIDR", "PublicSubnetCIDR", "PrivateSubnetCIDR" ] },
-         "Label" : { "default" : "Subscription Pool ID" }, "Parameters" : [ "POOLID" ] }
+        { "Label" : { "default" : "Subscription Pool ID" }, "Parameters" : [ "POOLID" ] }
      ],
     "ParameterLabels" : { "Credentials" : { "default" : "Set the root password for Instances" } }
      }
@@ -97,7 +97,7 @@
       "MinLength": "0",
       "MaxLength": "255",
       "Default" : ""
-    },
+    }
   },
    "Mappings" : {
     "AWSRegion2RHELAMI" : {
@@ -791,7 +791,8 @@
                 "/bin/sed -i '/0.2$/d' /etc/resolv.conf \n",
                 "/bin/sed -i \"s/PEERDNS=\\\"yes\\\"/PEERDNS=\\\"no\\\"/g\" /etc/sysconfig/network-scripts/ifcfg-eth0 \n",
                 {"Fn::Join" : [ "", [ "echo DNS1=", "\"", {"Fn::GetAtt":[ "Node2LAN1Interface", "PrimaryPrivateIpAddress"]}, "", "\"", " >> /etc/sysconfig/network-scripts/ifcfg-eth0",  "\n" ] ]},
-                {"Fn::Join" : [ "", [ "echo DNS2=", "\"", {"Fn::GetAtt":[ "Node1LAN1Interface", "PrimaryPrivateIpAddress"]}, "", "\"", " >> /etc/sysconfig/network-scripts/ifcfg-eth0",  "\n" ] ]},              ]
+                {"Fn::Join" : [ "", [ "echo DNS2=", "\"", {"Fn::GetAtt":[ "Node1LAN1Interface", "PrimaryPrivateIpAddress"]}, "", "\"", " >> /etc/sysconfig/network-scripts/ifcfg-eth0",  "\n" ] ]}
+              ]
             ]
           }
         },
