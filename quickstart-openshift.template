@@ -401,7 +401,7 @@
                 "systemctl start openshift_install_v1.timer \n",
                 "systemctl disable openshift_install_v1.timer \n",
                 "systemctl disable openshift_install_v1.service\n",
-                {"Fn::Join" : [ "", [ "echo namserver ", "'", {"Fn::GetAtt":[ "Node1LAN1Interface", "PrimaryPrivateIpAddress"]}, "", "'", " >> /etc/resolv.conf",  "\n" ] ]},
+                {"Fn::Join" : [ "", [ "echo nameserver ", "'", {"Fn::GetAtt":[ "Node1LAN1Interface", "PrimaryPrivateIpAddress"]}, "", "'", " >> /etc/resolv.conf",  "\n" ] ]},
                 { "Fn::Join":[ "", [ "echo \"", "/bin/cfn-signal -e 0 '", { "Ref":"ClientAPPWaitHandle" }, "'\" >> /root/install_pods \n" ] ] }
               ]
             ]
@@ -777,7 +777,7 @@
                 "/bin/sh /root/nfs-script > /var/log/nfs-script.log 2>&1 \n",
                 "/usr/bin/rpm -Uvh /root/jq-1.3-2.el6.x86_64.rpm \n",
                 "/bin/sed -i '/0.2$/d' /etc/resolv.conf \n",
-                {"Fn::Join" : [ "", [ "echo namserver ", "'", {"Fn::GetAtt":[ "Node1LAN1Interface", "PrimaryPrivateIpAddress"]}, "", "'", " >> /etc/resolv.conf",  "\n" ] ]},
+                {"Fn::Join" : [ "", [ "echo nameserver ", "'", {"Fn::GetAtt":[ "Node1LAN1Interface", "PrimaryPrivateIpAddress"]}, "", "'", " >> /etc/resolv.conf",  "\n" ] ]},
                 "/bin/sed -i \"s/PEERDNS=\\\"yes\\\"/PEERDNS=\\\"no\\\"/g\" /etc/sysconfig/network-scripts/ifcfg-eth0 \n"              ]
             ]
           }
