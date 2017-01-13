@@ -12,16 +12,20 @@ while [ $? -ne 0 ]; do
     sleep 10
     ping -c1 ose-node2.rhosepaas.com
 done
-yum install -y atomic-openshift* openshift* etcd
+if [ -x "/root/prepare.sh" ]; then
+    echo "running /root/prepare.sh"
+   /root/prepare.sh > /tmp/prepare.log 2>&1
+else
+   yum install -y atomic-openshift* openshift* etcd
+fi
 sleep 60
 rpm -q atomic-openshift | grep -qw atomic-openshift || {
     echo "Failed to install openshift packages. check that the host managed to subscribe to the repo rhel-7-server-ose-3.3-rpms" | tee -a /tmp/v1_installscript.log
     exit 1
 }
-echo "Temporarily exiting anyway now, to verify. remove this to run."
-exit 0
+echo "running ansible-playbook /usr/share/ansible/openshift-ansible/playbooks/byo/config.yml, check progress in /tmp/ose_install.log"
 
-ssh -C -tt -v -o KbdInteractiveAuthentication=no -o PreferredAuthentications=gssapi-with-mic,gssapi-keyex,hostbased,publickey -o PasswordAuthentication=no -o ConnectTimeout=10 ose-master.rhosepaas.com /bin/ansible-playbook -vvvv /root/openshift-ansible/playbooks/byo/config.yml &> /tmp/ose_install.log
+ssh -C -tt -v -o KbdInteractiveAuthentication=no -o PreferredAuthentications=gssapi-with-mic,gssapi-keyex,hostbased,publickey -o PasswordAuthentication=no -o ConnectTimeout=10 ose-master.rhosepaas.com /bin/ansible-playbook -vvvv /usr/share/ansible/openshift-ansible/playbooks/byo/config.yml &> /tmp/ose_install.log
 /bin/sed -i "s/name: deny_all/name: my_htpasswd_provider/g" /etc/origin/master/master-config.yaml
 /bin/sed -i "/kind: DenyAllPasswordIdentityProvider/a \     \ file: /etc/origin/master/users.htpasswd" /etc/origin/master/master-config.yaml
 /bin/sed -i "s/kind: DenyAllPasswordIdentityProvider/kind: HTPasswdPasswordIdentityProvider/g" /etc/origin/master/master-config.yaml
