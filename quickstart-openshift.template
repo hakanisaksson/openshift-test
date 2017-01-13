@@ -1,6 +1,6 @@
 {
   "AWSTemplateFormatVersion" : "2010-09-09",
-  "Description" : "QS(0022) RedHat OpenShift CloudFormation Template revised on 12-Sep-2016 ",
+  "Description" : "QS(0022) RedHat OpenShift CloudFormation Template revised on 13-Jan-2017 ",
   "Metadata" : {
   "AWS::CloudFormation::Interface" : {
     "ParameterGroups" : [
@@ -355,13 +355,13 @@
                 "yum install -y atomic-openshift* openshift* etcd \n",
                 "/usr/bin/wget --directory-prefix=/root https://s3-us-west-2.amazonaws.com/redhat-quickstart/openshift/jq-1.3-2.el6.x86_64.rpm \n",
                 "/usr/bin/wget --directory-prefix=/root https://s3-us-west-2.amazonaws.com/redhat-quickstart/openshift/ansible_hosts_3_2 \n",
-                "/usr/bin/wget --no-check-certificate --directory-prefix=/root https://github.com/hakanisaksson/openshift-test/ansible_hosts_3_3 \n",
+                "/usr/bin/wget --directory-prefix=/root https://github.com/hakanisaksson/openshift-test/blob/master/ansible_hosts_3_3 \n",
                 "/usr/bin/wget --directory-prefix=/root https://s3-us-west-2.amazonaws.com/redhat-quickstart/openshift/cfninstall \n",
                 "/usr/bin/wget --directory-prefix=/root https://s3-us-west-2.amazonaws.com/redhat-quickstart/openshift/nfs-script \n",
                 "/usr/bin/wget --directory-prefix=/root/.ssh https://s3-us-west-2.amazonaws.com/redhat-quickstart/openshift/config \n",
                 "/usr/bin/wget --directory-prefix=/root https://s3-us-west-2.amazonaws.com/redhat-quickstart/openshift/ssh-test.sh \n",
                 "/usr/bin/wget --directory-prefix=/root https://s3-us-west-2.amazonaws.com/redhat-quickstart/openshift/v2_install_script \n",
-                "/usr/bin/wget --no-check-certificate --directory-prefix=/root https://github.com/hakanisaksson/openshift-test/v3_install_script \n",
+                "/usr/bin/wget --directory-prefix=/root https://github.com/hakanisaksson/openshift-test/blob/master/v3_install_script \n",
                 "/usr/bin/wget --directory-prefix=/root https://s3-us-west-2.amazonaws.com/redhat-quickstart/openshift/install_pods2 \n",
                 "/usr/bin/wget --directory-prefix=/etc/systemd/system/ https://s3-us-west-2.amazonaws.com/redhat-quickstart/openshift/openshift_install_v1.service \n",
                 "/usr/bin/wget --directory-prefix=/etc/systemd/system/ https://s3-us-west-2.amazonaws.com/redhat-quickstart/openshift/openshift_install_v1.timer \n",
