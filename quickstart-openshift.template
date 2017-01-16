@@ -851,7 +851,7 @@
               "sleep 120 \n",
               "/usr/bin/tar -zxvf /root/oc-3.2.0.44-linux.tar.gz \n",
               "sleep 30 \n",
-              "/usr/bin/cp /root/mnt/redhat/staging-cds/ose-clients-3.2.0.44/usr/share/atomic-openshift/linux/oc /bin/ \n",
+              "/usr/bin/cp /mnt/redhat/staging-cds/ose-clients-3.2.0.44/usr/share/atomic-openshift/linux/oc /bin/ \n",
               "chmod +x /bin/oc \n",
               "oc version > /root/oc-ver.log \n",
               {"Fn::Join" :[ "", [ "echo '", {"Fn::GetAtt":[ "MasterLAN1Interface", "PrimaryPrivateIpAddress" ]}, " ose-master.rhosepaas.com ose-master", "'", " >> /etc/hosts",  "\n" ] ]},
