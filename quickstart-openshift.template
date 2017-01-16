@@ -859,9 +859,10 @@
               {"Fn::Join" :[ "", [ "echo '", {"Fn::GetAtt":[ "Node2LAN1Interface", "PrimaryPrivateIpAddress" ]}, " ose-node2.rhosepaas.com ose-node2", "'", " >> /etc/hosts",  "\n" ] ]},
               "/bin/sed -i 's/#PubkeyAuthentication yes/PubkeyAuthentication yes/g' /etc/ssh/sshd_config \n",
               "/bin/sed -i \"s/$PasswordAuthentication no/$PasswordAuthentication yes/g\" /etc/ssh/sshd_config \n",
-              "/usr/bin/wget --directory-prefix=/root https://s3.amazonaws.com/aws-cli/awscli-bundle.zip -o awscli-bundle.zip \n",
               "/bin/sed -i '/0.2$/d' /etc/resolv.conf \n",
+              {"Fn::Join" : [ "", [ "echo nameserver ", "'", {"Fn::GetAtt":[ "Node1LAN1Interface", "PrimaryPrivateIpAddress"]}, "", "'", " >> /etc/resolv.conf",  "\n" ] ]},
               "/bin/sed -i \"s/PEERDNS=\\\"yes\\\"/PEERDNS=\\\"no\\\"/g\" /etc/sysconfig/network-scripts/ifcfg-eth0 \n",
+              "/usr/bin/wget --directory-prefix=/root https://s3.amazonaws.com/aws-cli/awscli-bundle.zip -o awscli-bundle.zip \n",
               "unzip awscli-bundle.zip \n",
               "sudo ./awscli-bundle/install -i /usr/local/aws -b /usr/local/bin/aws \n",
               "dnf install -y git \n"
